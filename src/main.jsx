@@ -11,7 +11,7 @@ function getTitle(title) {
 
 
 function App(){
-  const stories=[{
+  const initialStories=[{
   
     objectID: "1",
     title: "React 19",
@@ -29,6 +29,7 @@ function App(){
     points: 85,
     num_comments: 20,
   },];
+  const [stories, setStories] = React.useState(initialStories);
   const [searchTerm, setSearchTerm] = React.useState(
     localStorage.getItem('search') || ''
   );
@@ -38,43 +39,60 @@ function App(){
   const handleChange=(event)=>{
     setSearchTerm(event.target.value);
   };
+  const handleRemoveStory = (item) => {
+     const newStories = stories.filter(
+       (story) => story.objectID !== item.objectID
+      );
+      setStories(newStories);
+    };
+
   const filteredStories = stories.filter((story) =>
     story.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+    
   return (    <>
     <h1> CS220course </h1>
     <p> this course id {title} </p>
-    <p>i am calling the function {getTitle("lecture1")}</p>    
-    <Search searchTerm={searchTerm} onSearch={handleChange} />
+    <p>i am calling the function {getTitle("lecture1")}</p>  
+      
+    <InputWithLabel
+        id="search"
+        value={searchTerm}
+        onInputChange={handleChange}
+    >
+     <strong>Search:</strong>
+    </InputWithLabel>
     <h1>React List </h1>
-    <List list={filteredStories} />
+    <List list={filteredStories} onRemoveItem={handleRemoveStory} />
 
     </>
   )
+
 }
 
-const List = ({list}) => {
+const List = ({list, onRemoveItem}) => {
   return (
     <ul>
       {list.map((item)=> (
-        <Item key={item.objectID} item={item} />
+        <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
       ))}
     </ul>
   );
 };
-  const Item = ({ item }) => (
+  const Item = ({ item, onRemoveItem }) => (
   <li>
     <a href={item.url}>{item.title}</a> by {item.author}
+    <button onClick={() => onRemoveItem(item)}>Delete</button>
   </li>
 );
 
-const Search= ({ searchTerm, onSearch }) =>{
+const InputWithLabel= ({ id, value, onInputChange, children, type="text" }) =>{
 
   return (
-    <div>
-      <label htmlFor="search" className='react' > Search: </label>
-      <input type="text" id='search' value={searchTerm} onChange={onSearch} />
-    </div>
+    <>
+      <label htmlFor={id}>{children} </label>
+      <input type={type} id={id} value={value} onChange={onInputChange} />
+    </>
   )
 }
 
