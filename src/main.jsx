@@ -29,7 +29,12 @@ function App(){
     points: 85,
     num_comments: 20,
   },];
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const [searchTerm, setSearchTerm] = React.useState(
+    localStorage.getItem('search') || ''
+  );
+  React.useEffect(() => {
+    localStorage.setItem('search', searchTerm);
+  }, [searchTerm]);
   const handleChange=(event)=>{
     setSearchTerm(event.target.value);
   };
@@ -39,8 +44,8 @@ function App(){
   return (    <>
     <h1> CS220course </h1>
     <p> this course id {title} </p>
-    <p>i am calling the function {getTitle("lecture1")}</p>
-    <Search onSearch={handleChange} />
+    <p>i am calling the function {getTitle("lecture1")}</p>    
+    <Search searchTerm={searchTerm} onSearch={handleChange} />
     <h1>React List </h1>
     <List list={filteredStories} />
 
@@ -48,20 +53,27 @@ function App(){
   )
 }
 
-const List = (props) => {
+const List = ({list}) => {
   return (
     <ul>
-      {props.list.map(function(item){ return <li key={item.objectID}><a href={item.url}>{item.title}</a></li> })}
+      {list.map((item)=> (
+        <Item key={item.objectID} item={item} />
+      ))}
     </ul>
-  )
-}
+  );
+};
+  const Item = ({ item }) => (
+  <li>
+    <a href={item.url}>{item.title}</a> by {item.author}
+  </li>
+);
 
-const Search= (props) =>{
+const Search= ({ searchTerm, onSearch }) =>{
 
   return (
     <div>
       <label htmlFor="search" className='react' > Search: </label>
-      <input type="text" id='search' onChange={props.onSearch} />
+      <input type="text" id='search' value={searchTerm} onChange={onSearch} />
     </div>
   )
 }
