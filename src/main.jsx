@@ -1,100 +1,146 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
 import * as React from 'react';
-const title ='React Course';
-function getTitle(title) {
-  return title;
-};
+import { useState, useEffect } from 'react';
+import reactLogo from './assets/react.svg';
+import viteLogo from '/vite.svg';
+import './App.css';
 
 
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
-function App(){
-  const initialStories=[{
-  
-    objectID: "1",
-    title: "React 19",
-    url: "https://react.dev",
-    author: "dan_abramov",
-    points: 120,
-    num_comments: 45,
-  },
-  {
-    objectID: "2",
-    title: "JavaScript Trends in 2026",
-    url: "https://example.com/js-trends",
-
-    author: "sarah_dev",
-    points: 85,
-    num_comments: 20,
-  },];
-  const [stories, setStories] = React.useState(initialStories);
+const App = () => {
   const [searchTerm, setSearchTerm] = React.useState(
-    localStorage.getItem('search') || ''
+    localStorage.getItem('search') || 'React'
   );
+
+  
+  const [stories, setStories] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
+  const [url, setUrl] = React.useState(`${API_ENDPOINT}${searchTerm}`);
+
+  
+  React.useEffect(() => {
+    if (!searchTerm) return;
+
+    setIsLoading(true);
+    setIsError(false);
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((result) => {
+        setStories(result.hits); 
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsError(true); 
+        setIsLoading(false);
+      });
+  }, [url]); 
+
+  
   React.useEffect(() => {
     localStorage.setItem('search', searchTerm);
   }, [searchTerm]);
-  const handleChange=(event)=>{
+
+  const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
-  const handleRemoveStory = (item) => {
-     const newStories = stories.filter(
-       (story) => story.objectID !== item.objectID
-      );
-      setStories(newStories);
-    };
 
-  const filteredStories = stories.filter((story) =>
-    story.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-    
-  return (    <>
-    <h1> CS220course </h1>
-    <p> this course id {title} </p>
-    <p>i am calling the function {getTitle("lecture1")}</p>  
+  
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
+  };
+
+  const handleRemoveStory = (item) => {
+    const newStories = stories.filter(
+      (story) => item.objectID !== story.objectID
+    );
+    setStories(newStories);
+  };
+
+  return (
+    <div>
+      <h1>My Hacker Stories</h1>
+
       
-    <InputWithLabel
+      <InputWithLabel
         id="search"
         value={searchTerm}
-        onInputChange={handleChange}
-    >
-     <strong>Search:</strong>
-    </InputWithLabel>
-    <h1>React List </h1>
-    <List list={filteredStories} onRemoveItem={handleRemoveStory} />
+        onInputChange={handleSearch}
+      >
+        <strong>Search:</strong>
+      </InputWithLabel>
 
-    </>
-  )
+    
+      <button 
+        type="button" 
+        disabled={!searchTerm} 
+        onClick={handleSearchSubmit}
+      >
+        Submit
+      </button>
 
-}
+      <hr />
 
-const List = ({list, onRemoveItem}) => {
-  return (
-    <ul>
-      {list.map((item)=> (
-        <Item key={item.objectID} item={item} onRemoveItem={onRemoveItem} />
-      ))}
-    </ul>
+    
+      {isError && <p>Something went wrong ...</p>}
+
+      {isLoading ? (
+        <p>Loading ...</p>
+      ) : (
+        <List list={stories} onRemoveItem={handleRemoveStory} />
+      )}
+    </div>
   );
 };
-  const Item = ({ item, onRemoveItem }) => (
+
+
+const InputWithLabel = ({ 
+  id, 
+  value, 
+  type = 'text', 
+  onInputChange, 
+  children 
+}) => (
+  <>
+    <label htmlFor={id}>{children}</label>
+    &nbsp;
+    <input
+      id={id}
+      type={type} 
+      value={value}
+      onChange={onInputChange}
+    />
+  </>
+);
+
+const List = ({ list, onRemoveItem }) => (
+  <ul>
+    {list.map((item) => (
+      <Item 
+        key={item.objectID} 
+        item={item} 
+        onRemoveItem={onRemoveItem} 
+      />
+    ))}
+  </ul>
+);
+
+const Item = ({ item, onRemoveItem }) => (
   <li>
-    <a href={item.url}>{item.title}</a> by {item.author}
-    <button onClick={() => onRemoveItem(item)}>Delete</button>
+    <span>
+      <a href={item.url}>{item.title}</a>
+    </span>
+    <span> {item.author}</span>
+    <span> {item.num_comments}</span>
+    <span> {item.points}</span>
+    <span>
+      <button type="button" onClick={() => onRemoveItem(item)}>
+        Dismiss
+      </button>
+    </span>
   </li>
 );
 
-const InputWithLabel= ({ id, value, onInputChange, children, type="text" }) =>{
 
-  return (
-    <>
-      <label htmlFor={id}>{children} </label>
-      <input type={type} id={id} value={value} onChange={onInputChange} />
-    </>
-  )
-}
-
-
-export default App
+export default App;
